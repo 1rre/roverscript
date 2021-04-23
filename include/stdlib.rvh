@@ -23,23 +23,29 @@ define tl `list:{T}` | {T} (
 
 % while loop
 
-define while `fun` `fun` | 'nil' (
+define while `fun` `fun` | atom (
   !=0; _? 'nil'.
   @pred!=1; @fn? while @pred @fn.  
 )
 
 % for loop
 
-define for `ident` <- `list:{_}` `fun` | 'nil' (
-  _; $it = []; $f2? 'nil'.
+define for `ident` <- `list:{_}` `fun` | atom (
+  _; []; _? 'nil'.
   $i; $it; $f2?
     @$i <- hd($it);
     $f2!;
     for @$i <- tl($it) $f2.
 )
 
-define `int` to `int` | list{int}
+define `int` to `int` | list{int:32} (
+  x; y, y >= x? x to y by 1.
+  x; y? x to y by -1.
+)
 
-define `int` to `int` by `int` | list (
-  a;a,a>? [a]
+define `int` to `int` by `int` | list{int:32} (
+  a; a; _? [a].
+  a; b, a>b; c, c>0? [].
+  a; b, b>a; c, c<0? [].
+  a; b; c? [a | a+c to b by c].
 )

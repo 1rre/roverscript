@@ -1,18 +1,24 @@
 
-type percent (
-  bits:7.
+type number (
+  int:32.
+  float:32.
 )
 
-define `percent` = full | boolean (
-  N? N = 100.
+define `number` % | float:32 (
+  n | float:32? n / 100.
+  n | int:32? n / 100.
 )
 
-define `percent` = empty | boolean (
+define `float:32` is full | boolean (
+  N? N = 1.
+)
+
+define `float:32` is empty | boolean (
   N? N = 0.
 )
 
 type energy_system (
-  charge | percent;
+  charge | float:32;
   range | float:32.
 )
 
