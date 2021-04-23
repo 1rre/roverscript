@@ -5,10 +5,14 @@
 #include <stdarg.h>
 
 
-typedef struct {
+typedef struct _List List;
+
+struct _List {
   union AnyVal* head;
-  struct List* tail;
-} List;
+  List* tail;
+  int size;
+};
+
 
 typedef struct {
   int size;
@@ -29,13 +33,32 @@ typedef union AnyVal {
 
 } Value;
 
-
-// List
-List list(Value* head);
-List cons(Value* head, struct List* tail);
+// Lists
+List cons(Value* head, List* tail) {
+  List rtn;
+  rtn.head = head;
+  rtn.tail = tail;
+  rtn.size = tail==NULL?1:tail->size+1;
+  return rtn;
+}
+List list(Value* head) {
+  return cons(head,NULL);
+}
 
 // Tuple
-Tuple tuple(int size, ...);
+Tuple tuple(int size, ...) {
+  Tuple rtn;
+  Value** elems = (Value**)malloc(size * sizeof(Value*));
+  va_list args;
+  va_start(args,size);
+  for (int i = 0; i < size; i++) {
+    elems[i] = va_arg(args,Value*);
+  }
+  va_end(args);
+  rtn.size = size;
+  rtn.elems = elems;
+  return rtn;
+}
 void del_tuple(Value* val) {
   free(val->asTuple.elems);
 }
