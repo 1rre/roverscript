@@ -20,11 +20,11 @@ Variable get_literal(Value val, Variable* vars, int* n_args, Variable** args) {
     case VARIABLE:
       return vars[val.value.asVarIndex];
     case TUPLE_ELEM:
-      // TODO: Get Type
-      rtn.val = *vars[val.value.asElem.varIndex].val.asTuple.elems[val.value.asElem.elem];
+      rtn.val = vars[val.value.asElem.varIndex].val.asTuple.elems[val.value.asElem.elem];
+      rtn.type = vars[val.value.asElem.varIndex].val.asTuple.types[val.value.asElem.elem];
     case HEAD_OF_LIST:
-      // TODO: Get type
-      rtn.val = *vars[val.value.asVarIndex].val.asList.head;
+      rtn.val = *(vars[val.value.asVarIndex].val.asList.head);
+      rtn.type = vars[val.value.asVarIndex].val.asList.type;
     case FUNCTION_CALL:
       if (val.value.asFunction.id < DEFFUN_START) {
         switch (val.value.asFunction.id) {
@@ -72,6 +72,7 @@ int interpret(Instruction* inst, int n_vars, Variable* vars, int n_args, Variabl
     break;
     case PREPEND_LIST:
       // TODO: Lists
+      // FIXME: Overwiting var[i] will delete the list
     break;
     case JUMP_IF:
       // TODO: Jump
@@ -81,7 +82,12 @@ int interpret(Instruction* inst, int n_vars, Variable* vars, int n_args, Variabl
     break;
     case RETURN:
     r_val = get_literal(inst->operand.rvo,vars,&n_args,&args).val.asInt;
+    for (int i = 0; i < n_vars; i++) {
+      if (vars[i].type == TUPLE) del_tuple(&(vars[i].val.asTuple));
+      //else if (vars[i].type == LIST) del_list(&(vars[i].val.asList));
+    }
     free(vars);
+    free(args);
     return r_val;
     return 0;
   }

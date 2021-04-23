@@ -4,6 +4,38 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+char buf[32];
+
+typedef enum
+{
+  ADD_BIF,
+  SUB_BIF,
+  MUL_BIF,
+  IDIV_BIF,
+  FDIV_BIF,
+  DEFFUN_START
+} BIF;
+
+typedef enum
+{
+  CREATE_VARIABLE,
+  DELETE_VARIABLE,
+  ASSIGN_VARIABLE,
+  PREPEND_LIST,
+  FUNCTION_HEADER,
+  JUMP_IF,
+  JUMP,
+  RETURN
+} Opcode;
+
+typedef enum
+{
+  INT,
+  FLOAT,
+  ATOM,
+  LIST,
+  TUPLE
+} TypeCode;
 
 typedef struct _List List;
 
@@ -11,17 +43,19 @@ struct _List {
   union AnyVal* head;
   List* tail;
   int size;
+  TypeCode type;
 };
 
 typedef struct {
-    int size;
-    void* start;
-  } Bits;
+  int size;
+  void* start;
+} Bits;
 
 
 typedef struct {
   int size;
-  union AnyVal** elems;
+  union AnyVal* elems;
+  TypeCode* types;
 } Tuple;
 
 typedef union AnyVal {
@@ -47,24 +81,17 @@ List list(AnyVal* head) {
   return cons(head,NULL);
 }
 
-// Tuple
-Tuple tuple(int size, ...) {
-  Tuple rtn;
-  AnyVal** elems = (AnyVal**)malloc(size * sizeof(AnyVal*));
-  va_list args;
-  va_start(args,size);
-  for (int i = 0; i < size; i++) {
-    elems[i] = va_arg(args,AnyVal*);
-  }
-  va_end(args);
-  rtn.size = size;
-  rtn.elems = elems;
-  return rtn;
+void del_tuple(Tuple* val) {
+  free(val->elems);
+  free(val->types);
 }
-void del_tuple(AnyVal* val) {
-  free(val->asTuple.elems);
+/*
+void del_list(List* val) {
+  if (val->size > 1) del_list(val->tail);
+  free(val);
+  return;
 }
-
+*/
 
 
 

@@ -1,38 +1,11 @@
 #ifndef OPCODE_H
 #define OPCODE_H
 
-typedef enum {
-  ADD_BIF,
-  SUB_BIF,
-  MUL_BIF,
-  IDIV_BIF,
-  FDIV_BIF,
-  DEFFUN_START
-} BIF;
-
-typedef enum {
-  CREATE_VARIABLE,
-  DELETE_VARIABLE,
-  ASSIGN_VARIABLE,
-  PREPEND_LIST,
-  FUNCTION_HEADER,
-  JUMP_IF,
-  JUMP,
-  RETURN
-} Opcode;
-
-typedef enum {
-  INT,
-  FLOAT,
-  ATOM,
-  LIST,
-  TUPLE
-} TypeCode;
-
 typedef struct {
   AnyVal val;
   TypeCode type;
 } Variable;
+
 typedef unsigned int Positional;
 
 typedef struct {
@@ -78,8 +51,8 @@ typedef struct {
 } AssignVariableOp;
 
 typedef struct {
-  Variable list;
-  Value new_head;
+  int list;
+  Variable new_head;
 } PrependListOp;
 
 typedef struct {
@@ -116,6 +89,24 @@ typedef struct {
   Operand operand;
 } Instruction;
 
+// Tuple
+Tuple tuple(int size, ...) {
+  Tuple rtn;
+  AnyVal* elems = (AnyVal*)malloc(size * sizeof(AnyVal));
+  TypeCode* types = (TypeCode*)malloc(size * sizeof(TypeCode));
+  va_list args;
+  va_start(args,size);
+  for (int i = 0; i < size; i++) {
+    Variable elem = *va_arg(args, Variable*);
+    elems[i] = elem.val;
+    types[i] = elem.type;
+  }
+  va_end(args);
+  rtn.size = size;
+  rtn.elems = elems;
+  rtn.types = types;
+  return rtn;
+}
 
 
 #endif
