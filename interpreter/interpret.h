@@ -51,11 +51,12 @@ load_lit:
 }
 
 int interpret(Instruction* inst, int n_vars, Variable* vars, int n_args, Variable* args) {
-  Serial.print(inst->opcode);
+  int r_val;
   switch(inst->opcode) {
     case CREATE_VARIABLE:
       vars = (Variable*)realloc(vars, (n_vars+1) * sizeof(Variable));
-      vars[n_vars].type = inst->operand.cvo.type;
+      vars[n_vars].type = inst->operand.cvo;
+      n_vars++;
     break;
     case DELETE_VARIABLE:
       vars = (Variable*)realloc(vars, (n_vars-inst->operand.dvo) * sizeof(Variable));
@@ -64,8 +65,9 @@ int interpret(Instruction* inst, int n_vars, Variable* vars, int n_args, Variabl
       if (inst->operand.avo.index < 0) {
         args = (Variable*)realloc(args, (n_args+1)*sizeof(Variable));
         args[n_args] = get_literal(inst->operand.avo.new_value,vars,&n_args,&args);
+        n_args++;
       } else {
-        vars[inst->operand.avo.index] = get_literal(inst[0].operand.avo.new_value,vars,&n_args,&args);
+        vars[inst->operand.avo.index] = get_literal(inst->operand.avo.new_value,vars,&n_args,&args);
       }
     break;
     case PREPEND_LIST:
@@ -78,12 +80,12 @@ int interpret(Instruction* inst, int n_vars, Variable* vars, int n_args, Variabl
       // TODO: Jump
     break;
     case RETURN:
-    //int r_val = get_literal(inst->operand.rvo,vars,&n_args,&args).val.asInt;
-    //free(vars);
-    //return r_val;
+    r_val = get_literal(inst->operand.rvo,vars,&n_args,&args).val.asInt;
+    free(vars);
+    return r_val;
     return 0;
   }
-  interpret(inst+1,n_vars,vars,n_args,args);
+  return interpret(inst+1,n_vars,vars,n_args,args);
 }
 
 

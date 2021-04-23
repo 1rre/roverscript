@@ -68,10 +68,7 @@ typedef struct {
   ValueRef value;
 } Value;
 
-typedef struct {
-  Variable variable;
-  TypeCode type;
-} CreateVariableOp;
+typedef TypeCode CreateVariableOp;
 
 typedef unsigned int DeleteVariableOp;
 
