@@ -1,0 +1,10 @@
+= EE Rover Project Notes
+
+== Remote Control
+
+=== Scripting
+- Allows for basic scripting (ie "if distance to nearest obstacle is ge n, speed up, otherwise slow down")
+
+=== App
+- Shows some current stats
+- Allows for turns, move forward, backward, etc.

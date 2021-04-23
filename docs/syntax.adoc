@@ -1,0 +1,9 @@
+= RovaScript Syntax
+
+== Numbers
+TODO: Figure out int vs float etc.
+
+== Records
+Records are data structures which are used to store multiple variables
+
+== Predefined variables

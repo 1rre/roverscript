@@ -1,0 +1,45 @@
+% @ implies a reference rather than a value is passed
+% Variable names beginning with $ are reserved for pseudo-ops such as for, while
+% Variable names beginning with _ are not stored
+
+% {T} means any type
+% {T:int}, {T} etc. can also be used to accept any int etc.
+
+
+% Head of list
+
+define hd `list:{T}` | {T} (
+  []? 'empty_list'.
+  [hd|_]? hd. 
+)
+
+% Tail of List
+
+define tl `list:{T}` | {T} (
+  []? [].
+  [_|tl]? tl.
+)
+
+
+% while loop
+
+define while `fun` `fun` | 'nil' (
+  !=0; _? 'nil'.
+  @pred!=1; @fn? while @pred @fn.  
+)
+
+% for loop
+
+define for `ident` <- `list:{_}` `fun` | 'nil' (
+  _; $it = []; $f2? 'nil'.
+  $i; $it; $f2?
+    @$i <- hd($it);
+    $f2!;
+    for @$i <- tl($it) $f2.
+)
+
+define `int` to `int` | list{int}
+
+define `int` to `int` by `int` | list (
+  a;a,a>? [a]
+)

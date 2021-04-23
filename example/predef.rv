@@ -1,0 +1,29 @@
+
+type percent (
+  bits:7.
+)
+
+define `percent` = full | boolean (
+  N? N = 100.
+)
+
+define `percent` = empty | boolean (
+  N? N = 0.
+)
+
+type energy_system (
+  charge | percent;
+  range | float:32.
+)
+
+type drive_system (
+
+)
+
+type rover_system (
+  energy | energy_system;
+  drive | drive_system;
+)
+
+macro energy (subsystem#energy)
+
