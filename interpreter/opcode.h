@@ -45,7 +45,9 @@ typedef unsigned char TypeCode;
 typedef enum {
   INT_LITERAL,
   FLOAT_LITERAL,
-  TUPLE_ELEM
+  ATOMIC_LITERAL,
+  TUPLE_ELEM,
+  HEAD_OF_LIST
 } ValueType;
 
 typedef struct {
@@ -65,6 +67,14 @@ typedef struct {
   ValueRef val;
 } Value;
 
+typedef union {
+
+} Operand;
+
+typedef struct {
+  Opcode opcode;
+  Operand operand;
+} Instruction;
 
 
 
