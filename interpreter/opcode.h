@@ -1,74 +1,117 @@
 #ifndef OPCODE_H
 #define OPCODE_H
 
-/*
-Do we want variable length instructions so that we can have 32 bit values?
+typedef enum {
+  ADD_BIF,
+  SUB_BIF,
+  MUL_BIF,
+  IDIV_BIF,
+  FDIV_BIF,
+  DEFFUN_START
+} BIF;
 
-Opcode Fields:
-  opcode <- bitfield representing an operation
-  variable ref <- sequential ID for variables (AnyVal* stored in an array)
-  label ref <- sequential ID for labels (index of char in received data)
-  type code <- bitfield representing a type (one of Int,Float,List,Tuple,Atom,Variable?)
-  value <- raw value for type
+typedef enum {
+  CREATE_VARIABLE,
+  DELETE_VARIABLE,
+  ASSIGN_VARIABLE,
+  PREPEND_LIST,
+  FUNCTION_HEADER,
+  JUMP_IF,
+  JUMP,
+  RETURN
+} Opcode;
 
-Opcodes:
-  Create variable of type
-  {opcode} {variable ref} {}
+typedef enum {
+  INT,
+  FLOAT,
+  ATOM,
+  LIST,
+  TUPLE
+} TypeCode;
 
-  Delete variable of type
-  {opcode} {variable ref}
+typedef struct {
+  AnyVal val;
+  TypeCode type;
+} Variable;
+typedef unsigned int Positional;
 
-  Assign to variable
-  {opcode} {variable ref} {type code} {value}
-
-  Prepend to list
-  {opcode} {variable ref} {type code} {value}
-
-  +, *, >=, etc.
-  {opcode} {type code} {value} {type code} {value}
-
-  label/function header?
-    Maybe store as start position in array to be interpreted? (ie variable ref?)
-  {opcode} {label ref}
-
-  unconditional jump
-  {opcode} {label ref}
-
-  conditional jump
-  {opcode} {type code} {value}
-*/
-
-typedef unsigned char Opcode;
-typedef unsigned int Variable;
-typedef unsigned char TypeCode;
+typedef struct {
+  unsigned int id;
+  Positional location;
+} Function;
 
 typedef enum {
   INT_LITERAL,
   FLOAT_LITERAL,
   ATOMIC_LITERAL,
+  VARIABLE,
   TUPLE_ELEM,
-  HEAD_OF_LIST
+  HEAD_OF_LIST,
+  FUNCTION_CALL
 } ValueType;
 
 typedef struct {
   unsigned int elem;
-  Variable var;
+  unsigned int varIndex;
 } TupleValue;
  
 typedef union {
-  int asInt;
-  float asFloat;
-  Variable asVariable;
-  TupleValue asTupleElem;
+  AnyVal asLiteral;
+  unsigned int asVarIndex;
+  TupleValue asElem;
+  Positional asSection;
+  Function asFunction;
 } ValueRef;
 
 typedef struct {
   ValueType type;
-  ValueRef val;
+  ValueRef value;
 } Value;
 
-typedef union {
+typedef struct {
+  Variable variable;
+  TypeCode type;
+} CreateVariableOp;
 
+typedef unsigned int DeleteVariableOp;
+
+typedef struct {
+  int index;
+  Value new_value;
+} AssignVariableOp;
+
+typedef struct {
+  Variable list;
+  Value new_head;
+} PrependListOp;
+
+typedef struct {
+  Positional start;
+  Positional end;
+} FunctionHeaderOp;
+
+typedef struct {
+  Value predicate;
+  Positional dest;
+  Positional r_address;
+} JumpConditionalOp;
+
+typedef struct {
+  Positional dest;
+  Positional r_address;
+} JumpUnconditionalOp;
+
+typedef Value ReturnValueOp;
+
+typedef union {
+  CreateVariableOp cvo;
+  DeleteVariableOp dvo;
+  AssignVariableOp avo;
+  PrependListOp plo;
+  FunctionHeaderOp fho;
+  JumpConditionalOp jco;
+  JumpUnconditionalOp juo;
+  ReturnValueOp rvo;
 } Operand;
 
 typedef struct {

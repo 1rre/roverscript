@@ -1,0 +1,38 @@
+
+/*
+Do we want variable length instructions so that we can have 32 bit values?
+
+Opcode Fields:
+  opcode <- bitfield representing an operation
+  variable ref <- sequential ID for variables (AnyVal* stored in an array)
+  label ref <- sequential ID for labels (index of char in received data)
+  type code <- bitfield representing a base type (float or int, represented by one of int literal, float literal, tuple element, head of list, atomic literal, variable, function call & maybe more). Tuples & Lists will be stored in temp variables & constructed into a variable, which is then passed under the "variable" type code to avoid complicating the instruction codes more than neccessary with variable lengths within types.
+  value <- raw value for type
+
+Opcodes:
+  Create variable of type
+  {opcode} {variable ref} {type code}
+
+  Delete variable of type
+    Type code is neccessary as tuples need all elems deleting too
+  {opcode} {variable ref} {type code}
+
+  Assign to variable
+  {opcode} {variable ref} {value type} {value}
+
+  Prepend to list
+  {opcode} {variable ref} {value type} {value}
+
+  Section header
+    Maybe store as start position in array to be interpreted? (ie variable ref?)
+  {opcode} {label ref} {label ref}
+
+  unconditional jump
+  {opcode} {label ref} {label ref}
+
+  conditional jump
+  {opcode} {value type} {value} {label ref} {label ref}
+
+  function call
+  {opcode} {label ref} {argument count} {arguments}* {label ref}
+*/
