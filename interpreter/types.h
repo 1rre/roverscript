@@ -13,6 +13,11 @@ struct _List {
   int size;
 };
 
+typedef struct {
+    int size;
+    void* start;
+  } Bits;
+
 
 typedef struct {
   int size;
@@ -20,46 +25,43 @@ typedef struct {
 } Tuple;
 
 typedef union AnyVal {
+
   int asInt;
   float asFloat;
 
   List asList;
   Tuple asTuple;
+  Bits asBits;
 
-  struct Bits {
-    int size;
-    void* start;
-  } asBits;
-
-} Value;
+} AnyVal;
 
 // Lists
-List cons(Value* head, List* tail) {
+List cons(AnyVal* head, List* tail) {
   List rtn;
   rtn.head = head;
   rtn.tail = tail;
   rtn.size = tail==NULL?1:tail->size+1;
   return rtn;
 }
-List list(Value* head) {
+List list(AnyVal* head) {
   return cons(head,NULL);
 }
 
 // Tuple
 Tuple tuple(int size, ...) {
   Tuple rtn;
-  Value** elems = (Value**)malloc(size * sizeof(Value*));
+  AnyVal** elems = (AnyVal**)malloc(size * sizeof(AnyVal*));
   va_list args;
   va_start(args,size);
   for (int i = 0; i < size; i++) {
-    elems[i] = va_arg(args,Value*);
+    elems[i] = va_arg(args,AnyVal*);
   }
   va_end(args);
   rtn.size = size;
   rtn.elems = elems;
   return rtn;
 }
-void del_tuple(Value* val) {
+void del_tuple(AnyVal* val) {
   free(val->asTuple.elems);
 }
 
