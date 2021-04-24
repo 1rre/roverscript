@@ -1,3 +1,6 @@
+#ifndef TEST_INTERPRETER_H
+#define TEST_INTERPRETER_H
+
 #include "interpret.h"
 
 Value value(ValueType t, ValueRef r) {
@@ -54,3 +57,5 @@ int test_interpret() {
   fwrite("%d\n", rtnVal);
   return rtnVal;
 }
+
+#endif
