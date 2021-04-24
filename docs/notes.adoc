@@ -8,3 +8,6 @@
 === App
 - Shows some current stats
 - Allows for turns, move forward, backward, etc.
+
+== Interpreter
+- TODO: Add mechanism for setting rover controls (special case assign variable?)

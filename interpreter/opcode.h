@@ -33,8 +33,6 @@ typedef enum {
   CREATE_VARIABLE,
   DELETE_VARIABLE,
   ASSIGN_VARIABLE,
-  PREPEND_LIST,
-  FUNCTION_HEADER,
   JUMP_IF,
   JUMP,
   RETURN
@@ -53,12 +51,6 @@ typedef struct List List;
 typedef struct Bits Bits;
 typedef struct Tuple Tuple;
 typedef union AnyVal AnyVal;
-
-struct ListMember {
-  AnyVal* value;
-  struct ListMember* next;
-  TypeCode type;
-};
 
 struct List {
   ListMember* head;
@@ -81,9 +73,16 @@ union AnyVal {
   int asInt;
   float asFloat;
 
-  List asList;
+  List* asList;
   Tuple asTuple;
   Bits asBits;
+};
+
+
+struct ListMember {
+  AnyVal value;
+  struct ListMember* next;
+  TypeCode type;
 };
 
 typedef struct {
@@ -91,28 +90,28 @@ typedef struct {
   TypeCode type;
 } Variable;
 
-
-#ifdef ARDUINO
-static List EMPTY_LIST = {NULL, 0};
-#else
-static List EMPTY_LIST = {NULL, 0};
-#endif
+static ListMember EMPTY_LIST_MEMBER;
+static List EMPTY_LIST = {&EMPTY_LIST_MEMBER, 0};
 
 // Lists
 List* cons(Variable* head, List* tail) {
   ListMember* new_head = (ListMember*)malloc(sizeof(ListMember));
-  List* rtn = (List*)malloc(sizeof(List));
+  List* rtn = (List*)malloc(sizeof (List));
   new_head->next = tail->head;
   new_head->type = head->type;
-  new_head->value = &head->val;
+  new_head->value = head->val;
   rtn->head = new_head;
   rtn->size = tail->size + 1;
-  if (tail != &EMPTY_LIST) free(tail);
   return rtn;
 }
 
-List* list(Variable* head) {
-  return cons(head, &EMPTY_LIST);
+void cons_inplace(Variable* head, List* list) {
+  ListMember* new_head = (ListMember*)malloc(sizeof(ListMember));
+  new_head->next = list->head;
+  new_head->type = head->type;
+  new_head->value = head->val;
+  list->head = new_head;
+  list->size++;
 }
 
 void del_tuple(Tuple* val) {

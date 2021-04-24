@@ -7,6 +7,8 @@ void setup() {
   Serial.begin(9600);
   while (!Serial);
   Serial.println(test_interpret());
+  Serial.println(sizeof(JumpConditionalOp));
+  Serial.println(sizeof(Variable));
 }
 
 void loop() {
