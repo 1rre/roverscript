@@ -2,10 +2,10 @@
 #define INTERPRET_H
 
 #include "opcode.h"
-#include "types.h"
-#include <stdio.h>
 
-Variable get_literal(Value val, Variable* vars, int* n_args, Variable** args) {
+AnyVal interpret(Instruction*, int, Variable*, int, Variable*);
+
+Variable get_literal(Value val, Instruction* inst, Variable* vars, int* n_args, Variable** args) {
   Variable rtn;
   switch (val.type) {
     case INT_LITERAL:
@@ -23,10 +23,10 @@ Variable get_literal(Value val, Variable* vars, int* n_args, Variable** args) {
       rtn.val = vars[val.value.asElem.varIndex].val.asTuple.elems[val.value.asElem.elem];
       rtn.type = vars[val.value.asElem.varIndex].val.asTuple.types[val.value.asElem.elem];
     case HEAD_OF_LIST:
-      rtn.val = *(vars[val.value.asVarIndex].val.asList.head);
-      rtn.type = vars[val.value.asVarIndex].val.asList.type;
+      rtn.val = *vars[val.value.asVarIndex].val.asList.head->value;
+      rtn.type = vars[val.value.asVarIndex].val.asList.head->type;
     case FUNCTION_CALL:
-      if (val.value.asFunction.id < DEFFUN_START) {
+      if (val.value.asFunction.id < DEF_FUN_START) {
         switch (val.value.asFunction.id) {
           case ADD_BIF:
             if ((*args)[1].type == INT && (*args)[1].type == INT) {
@@ -38,6 +38,8 @@ Variable get_literal(Value val, Variable* vars, int* n_args, Variable** args) {
             }
           break;
         }
+      } else {
+        rtn.val = interpret(inst + val.value.asFunction.location,*n_args,*args,0,NULL);
       }
       free(*args);
       *args = NULL;
@@ -50,8 +52,8 @@ load_lit:
   return rtn;
 }
 
-int interpret(Instruction* inst, int n_vars, Variable* vars, int n_args, Variable* args) {
-  int r_val;
+AnyVal interpret(Instruction* inst, int n_vars, Variable* vars, int n_args, Variable* args) {
+  Variable temp;
   switch(inst->opcode) {
     case CREATE_VARIABLE:
       vars = (Variable*)realloc(vars, (n_vars+1) * sizeof(Variable));
@@ -59,37 +61,37 @@ int interpret(Instruction* inst, int n_vars, Variable* vars, int n_args, Variabl
       n_vars++;
     break;
     case DELETE_VARIABLE:
+      for (int i = n_vars-inst->operand.dvo-1; i < n_vars; i++) 
+        if (vars[i].type == TUPLE) del_tuple(&(vars[i].val.asTuple));
+        else if (vars[i].type == LIST) del_list(&(vars[i].val.asList));
       vars = (Variable*)realloc(vars, (n_vars-inst->operand.dvo) * sizeof(Variable));
     break;
     case ASSIGN_VARIABLE:
       if (inst->operand.avo.index < 0) {
         args = (Variable*)realloc(args, (n_args+1)*sizeof(Variable));
-        args[n_args] = get_literal(inst->operand.avo.new_value,vars,&n_args,&args);
+        args[n_args] = get_literal(inst->operand.avo.new_value,inst,vars,&n_args,&args);
         n_args++;
       } else {
-        vars[inst->operand.avo.index] = get_literal(inst->operand.avo.new_value,vars,&n_args,&args);
+        vars[inst->operand.avo.index] = get_literal(inst->operand.avo.new_value,inst,vars,&n_args,&args);
       }
     break;
-    case PREPEND_LIST:
-      // TODO: Lists
-      // FIXME: Overwiting var[i] will delete the list
-    break;
     case JUMP_IF:
-      // TODO: Jump
+      temp = get_literal(inst->operand.jco.predicate,inst,vars,&n_args,&args);
+      if (temp.val.asInt) return interpret(inst + inst->operand.jco.dest, n_vars, vars, n_args, args);
     break;
     case JUMP:
-      // TODO: Jump
-    break;
+      return interpret(inst + inst->operand.juo.dest,n_args,vars,n_args,args);
     case RETURN:
-    r_val = get_literal(inst->operand.rvo,vars,&n_args,&args).val.asInt;
-    for (int i = 0; i < n_vars; i++) {
+    temp.val = get_literal(inst->operand.rvo,inst,vars,&n_args,&args).val;
+    for (int i = 0; i < n_vars; i++)
       if (vars[i].type == TUPLE) del_tuple(&(vars[i].val.asTuple));
-      //else if (vars[i].type == LIST) del_list(&(vars[i].val.asList));
-    }
+      else if (vars[i].type == LIST) del_list(&(vars[i].val.asList));
+    for (int i = 0; i < n_args; i++)
+      if (args[i].type == TUPLE) del_tuple(&(args[i].val.asTuple));
+      else if (args[i].type == LIST) del_list(&(args[i].val.asList));
     free(vars);
     free(args);
-    return r_val;
-    return 0;
+    return temp.val;
   }
   return interpret(inst+1,n_vars,vars,n_args,args);
 }

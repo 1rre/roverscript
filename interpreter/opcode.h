@@ -1,16 +1,144 @@
 #ifndef OPCODE_H
 #define OPCODE_H
 
+#include "arduino_utils.h"
+
+typedef enum {
+  // 2 args
+  ADD_BIF,    // a + b
+  SUB_BIF,    // a - b
+  MUL_BIF,    // a · b
+  IDIV_BIF,   // a div b
+  FDIV_BIF,   // a / b
+  BAND_BIF,   // a b· b
+  LAND_BIF,   // a l· b
+  BOR_BIF,    // a b+ b
+  LOR_BIF,    // a l+ b
+  BXOR_BIF,   // a x+ b
+  CONS_BIF,   // [a | b]
+  POW_BIF,    // a ^ b 
+  // 1 arg
+  BNOT_BIF,   // !a
+  LENGTH_BIF, // length(a)
+  ABS_BIF,    // abs(a)     // Also to be used for ~a as a can be forced to be int & 1 added
+  SQRT_BIF,   // sqrt(a)
+  SIN_BIF,    // sin(x)     // cos(x) = sin(x-pi/2)
+  // Multi arg
+  MK_TUPLE,   // (a,b,...)  // Takes n elems
+  // End of BIFs
+  DEF_FUN_START
+} BIF;
+
+typedef enum {
+  CREATE_VARIABLE,
+  DELETE_VARIABLE,
+  ASSIGN_VARIABLE,
+  PREPEND_LIST,
+  FUNCTION_HEADER,
+  JUMP_IF,
+  JUMP,
+  RETURN
+} Opcode;
+
+typedef enum {
+  INT,
+  FLOAT,
+  ATOM,
+  LIST,
+  TUPLE
+} TypeCode;
+
+typedef struct ListMember ListMember;
+typedef struct List List;
+typedef struct Bits Bits;
+typedef struct Tuple Tuple;
+typedef union AnyVal AnyVal;
+
+struct ListMember {
+  AnyVal* value;
+  struct ListMember* next;
+  TypeCode type;
+};
+
+struct List {
+  ListMember* head;
+  int size;
+};
+
+struct Bits {
+  int size;
+  void* start;
+};
+
+struct Tuple {
+  int size;
+  union AnyVal* elems;
+  TypeCode* types;
+};
+
+union AnyVal {
+
+  int asInt;
+  float asFloat;
+
+  List asList;
+  Tuple asTuple;
+  Bits asBits;
+};
+
 typedef struct {
   AnyVal val;
   TypeCode type;
 } Variable;
+
+
+#ifdef ARDUINO
+static List EMPTY_LIST = {NULL, 0};
+#else
+static List EMPTY_LIST = {NULL, 0};
+#endif
+
+// Lists
+List* cons(Variable* head, List* tail) {
+  ListMember* new_head = (ListMember*)malloc(sizeof(ListMember));
+  List* rtn = (List*)malloc(sizeof(List));
+  new_head->next = tail->head;
+  new_head->type = head->type;
+  new_head->value = &head->val;
+  rtn->head = new_head;
+  rtn->size = tail->size + 1;
+  if (tail != &EMPTY_LIST) free(tail);
+  return rtn;
+}
+
+List* list(Variable* head) {
+  return cons(head, &EMPTY_LIST);
+}
+
+void del_tuple(Tuple* val) {
+  free(val->elems);
+  free(val->types);
+}
+
+void del_all_members(ListMember* current) {
+  if (current->next == NULL) return;
+  del_all_members(current->next);
+  free(current);
+}
+
+void del_list(List* val) {
+  if (val == &EMPTY_LIST) return;
+  del_all_members(val->head);
+  free(val);
+  return;
+}
 
 typedef unsigned int Positional;
 
 typedef struct {
   unsigned int id;
   Positional location;
+  TypeCode returns;
 } Function;
 
 typedef enum {
@@ -51,24 +179,12 @@ typedef struct {
 } AssignVariableOp;
 
 typedef struct {
-  int list;
-  Variable new_head;
-} PrependListOp;
-
-typedef struct {
-  Positional start;
-  Positional end;
-} FunctionHeaderOp;
-
-typedef struct {
   Value predicate;
   Positional dest;
-  Positional r_address;
 } JumpConditionalOp;
 
 typedef struct {
   Positional dest;
-  Positional r_address;
 } JumpUnconditionalOp;
 
 typedef Value ReturnValueOp;
@@ -77,8 +193,6 @@ typedef union {
   CreateVariableOp cvo;
   DeleteVariableOp dvo;
   AssignVariableOp avo;
-  PrependListOp plo;
-  FunctionHeaderOp fho;
   JumpConditionalOp jco;
   JumpUnconditionalOp juo;
   ReturnValueOp rvo;
