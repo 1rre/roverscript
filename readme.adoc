@@ -2,3 +2,5 @@
 
 Roverscript as a whole language is currently on hold due to exams/internship, however the small interpreter for the target code is functional link:/interpreter/[here].
 
+I hope to add arbitrary precision ints, etc. to the interpreter, as well as build a better front end & test it more soon.
+
